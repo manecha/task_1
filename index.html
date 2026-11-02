@@ -25,17 +25,27 @@ button{cursor:pointer}
 .chip{flex:none;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 14px;font-size:.9rem}
 .chip.on{background:var(--acc);border-color:var(--acc);color:var(--onacc);font-weight:600}
 .add{display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:16px}
-.add input{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 12px;min-width:0}
+.add input,li.edit input{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 12px;min-width:0}
 .add .cat{grid-column:1}
 .add button{grid-row:1/3;grid-column:2;border:0;border-radius:10px;background:var(--acc);color:var(--onacc);font-weight:700;padding:0 18px}
 ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
-li{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+li{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
 li input[type=checkbox]{width:24px;height:24px;accent-color:var(--acc);flex:none}
-li .body{flex:1;min-width:0;overflow-wrap:anywhere}
+li .body{flex:1;min-width:0;overflow-wrap:anywhere;cursor:text}
 li.done .body{color:var(--sub);text-decoration:line-through}
+li.drag{opacity:.65;border-color:var(--acc)}
+.grip{flex:none;width:28px;height:36px;display:grid;place-items:center;color:var(--sub);touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
 .tag{display:inline-block;margin-left:8px;background:var(--accsoft);color:var(--acc);border-radius:6px;padding:0 8px;font-size:.8rem;text-decoration:none}
 .del{border:0;background:none;color:var(--sub);font-size:1.3rem;width:36px;height:36px}
+li.edit{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+li.edit .wide{grid-column:1/3}
+li.edit button{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px}
+li.edit .ok{background:var(--acc);border-color:var(--acc);color:var(--onacc);font-weight:700}
 .empty{text-align:center;color:var(--sub);padding:28px 0}
+.backup{margin-top:32px;padding-top:16px;border-top:1px solid var(--line);color:var(--sub);font-size:.85rem}
+.backup p{margin:0 0 10px}
+.backup .row{display:flex;gap:8px}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 14px;color:var(--ink)}
 </style>
 </head>
 <body>
@@ -55,6 +65,13 @@ li.done .body{color:var(--sub);text-decoration:line-through}
   </div>
   <ul id="list"></ul>
   <p class="empty" id="empty" hidden>この日のタスクはまだありません。上の入力欄から追加できます。</p>
+  <div class="backup">
+    <p>入力した内容は、この端末のブラウザに自動で保存されます。端末の変更やデータ消去に備えて、ファイルにも保存できます。</p>
+    <div class="row">
+      <button class="btn" id="export">ファイルに保存</button>
+      <label class="btn">ファイルから読み込む<input type="file" id="import" accept="application/json,.json" hidden></label>
+    </div>
+  </div>
 </main>
 <script>
 const KEY = 'tasks.v1';
@@ -62,12 +79,14 @@ const $ = id => document.getElementById(id);
 let tasks = load();
 let day = iso(new Date());
 let filter = 'all';
+let editing = null;
 
 function load() { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { return []; } }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(tasks)); } catch (e) {} }
 function iso(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
 function parts() { return day.split('-').map(Number); }
-function shift(n) { const [y, m, d] = parts(); day = iso(new Date(y, m - 1, d + n)); render(); }
+function shift(n) { const [y, m, d] = parts(); day = iso(new Date(y, m - 1, d + n)); editing = null; render(); }
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text) e.textContent = text; return e; }
 
 function render() {
   const [y, m, d] = parts();
@@ -78,55 +97,138 @@ function render() {
   if (filter !== 'all' && !cats.includes(filter)) filter = 'all';
 
   $('chips').replaceChildren(...['all', ...cats].map(c => {
-    const b = document.createElement('button');
-    b.className = 'chip' + (c === filter ? ' on' : '');
-    b.textContent = c === 'all' ? 'すべて' : c;
-    b.onclick = () => { filter = c; render(); };
+    const b = el('button', 'chip' + (c === filter ? ' on' : ''), c === 'all' ? 'すべて' : c);
+    b.onclick = () => { filter = c; editing = null; render(); };
     return b;
   }));
-  $('cats').replaceChildren(...cats.map(c => { const o = document.createElement('option'); o.value = c; return o; }));
+  $('cats').replaceChildren(...cats.map(c => { const o = el('option'); o.value = c; return o; }));
 
-  const list = tasks.filter(t => t.date === day && (filter === 'all' || t.cat === filter))
-    .sort((a, b) => a.done - b.done);
+  const list = tasks.filter(t => t.date === day && (filter === 'all' || t.cat === filter));
   const done = list.filter(t => t.done).length;
   $('progress').textContent = list.length ? done + ' / ' + list.length + ' 完了' : '';
   $('empty').hidden = list.length > 0;
 
-  $('list').replaceChildren(...list.map(t => {
-    const li = document.createElement('li');
-    if (t.done) li.className = 'done';
-    const cb = document.createElement('input');
-    cb.type = 'checkbox'; cb.checked = t.done;
-    cb.setAttribute('aria-label', '完了にする');
-    cb.onchange = () => { t.done = cb.checked; save(); render(); };
-    const body = document.createElement('span');
-    body.className = 'body';
-    body.textContent = t.text;
-    if (t.cat) { const tag = document.createElement('span'); tag.className = 'tag'; tag.textContent = t.cat; body.append(tag); }
-    const del = document.createElement('button');
-    del.className = 'del'; del.textContent = '×'; del.setAttribute('aria-label', '削除');
-    del.onclick = () => { tasks = tasks.filter(x => x.id !== t.id); save(); render(); };
-    li.append(cb, body, del);
-    return li;
-  }));
+  $('list').replaceChildren(...list.map(t => String(t.id) === editing ? editRow(t) : row(t)));
+  const first = document.querySelector('li.edit input');
+  if (first) first.focus();
+}
+
+function row(t) {
+  const li = el('li', t.done ? 'done' : '');
+  li.dataset.id = String(t.id);
+  const grip = el('span', 'grip', '≡');
+  grip.setAttribute('aria-label', 'ドラッグして並び替え');
+  grip.onpointerdown = e => startDrag(e, li, grip);
+  const cb = el('input');
+  cb.type = 'checkbox'; cb.checked = t.done;
+  cb.setAttribute('aria-label', '完了にする');
+  cb.onchange = () => { t.done = cb.checked; save(); render(); };
+  const body = el('span', 'body', t.text);
+  if (t.cat) body.append(el('span', 'tag', t.cat));
+  body.onclick = () => { editing = String(t.id); render(); };
+  const del = el('button', 'del', '×');
+  del.setAttribute('aria-label', '削除');
+  del.onclick = () => { tasks = tasks.filter(x => x.id !== t.id); save(); render(); };
+  li.append(grip, cb, body, del);
+  return li;
+}
+
+function editRow(t) {
+  const li = el('li', 'edit');
+  const text = el('input', 'wide'); text.value = t.text; text.placeholder = 'やること';
+  const cat = el('input', 'wide'); cat.value = t.cat || ''; cat.placeholder = 'カテゴリ'; cat.setAttribute('list', 'cats');
+  const ok = el('button', 'ok', '保存');
+  const cancel = el('button', '', 'キャンセル');
+  const commit = () => {
+    const v = text.value.trim();
+    if (!v) return;
+    t.text = v; t.cat = cat.value.trim();
+    editing = null; save(); render();
+  };
+  const keys = e => {
+    if (e.isComposing) return;
+    if (e.key === 'Enter') commit();
+    if (e.key === 'Escape') { editing = null; render(); }
+  };
+  text.onkeydown = keys; cat.onkeydown = keys;
+  ok.onclick = commit;
+  cancel.onclick = () => { editing = null; render(); };
+  li.append(text, cat, ok, cancel);
+  return li;
+}
+
+function startDrag(e, li, grip) {
+  e.preventDefault();
+  const ul = $('list');
+  li.classList.add('drag');
+  grip.setPointerCapture(e.pointerId);
+  const move = ev => {
+    const over = document.elementFromPoint(ev.clientX, ev.clientY);
+    const target = over && over.closest('li');
+    if (target && target !== li && target.parentNode === ul) {
+      const r = target.getBoundingClientRect();
+      ul.insertBefore(li, ev.clientY < r.top + r.height / 2 ? target : target.nextSibling);
+    }
+  };
+  const end = () => {
+    grip.removeEventListener('pointermove', move);
+    grip.removeEventListener('pointerup', end);
+    grip.removeEventListener('pointercancel', end);
+    commitOrder([...ul.children].map(x => x.dataset.id));
+  };
+  grip.addEventListener('pointermove', move);
+  grip.addEventListener('pointerup', end);
+  grip.addEventListener('pointercancel', end);
+}
+
+function commitOrder(ids) {
+  const visible = ids.map(id => tasks.find(t => String(t.id) === id)).filter(Boolean);
+  const slots = tasks.map((t, i) => visible.includes(t) ? i : -1).filter(i => i >= 0);
+  slots.forEach((slot, k) => { tasks[slot] = visible[k]; });
+  save(); render();
 }
 
 function add() {
   const text = $('text').value.trim();
   if (!text) return;
   const typed = $('cat').value.trim();
-  tasks.push({ id: Date.now() + Math.random(), date: day, text, cat: typed || (filter !== 'all' ? filter : ''), done: false });
+  tasks.push({ id: String(Date.now() + Math.random()), date: day, text, cat: typed || (filter !== 'all' ? filter : ''), done: false });
   $('text').value = '';
   save(); render();
   $('text').focus();
 }
+
+$('export').onclick = () => {
+  const blob = new Blob([JSON.stringify(tasks, null, 1)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'tasks-' + iso(new Date()) + '.json';
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+};
+
+$('import').onchange = async e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  try {
+    const data = JSON.parse(await f.text());
+    if (!Array.isArray(data) || !data.every(t => t && typeof t.text === 'string' && typeof t.date === 'string')) throw new Error('bad');
+    if (confirm('今のタスクを、このファイルの内容で置き換えます。よろしいですか？')) {
+      tasks = data.map(t => ({ id: String(t.id ?? Date.now() + Math.random()), date: t.date, text: t.text, cat: t.cat || '', done: !!t.done }));
+      save(); render();
+    }
+  } catch (err) {
+    alert('読み込めませんでした。「ファイルに保存」で書き出したファイルを選んでください。');
+  }
+  e.target.value = '';
+};
 
 $('addBtn').onclick = add;
 $('text').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) add(); });
 $('cat').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) add(); });
 $('prev').onclick = () => shift(-1);
 $('next').onclick = () => shift(1);
-$('today').onclick = () => { day = iso(new Date()); render(); };
+$('today').onclick = () => { day = iso(new Date()); editing = null; render(); };
 render();
 </script>
 </body>
