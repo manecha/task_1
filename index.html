@@ -7,13 +7,13 @@
 <meta name="apple-mobile-web-app-title" content="今日やること">
 <title>今日やること</title>
 <style>
-:root{--bg:#F4F7F6;--card:#fff;--ink:#1C2826;--sub:#6B7B78;--line:#DDE5E3;--acc:#0F766E;--accsoft:#D9EFEB;--onacc:#fff;color-scheme:light dark}
-@media (prefers-color-scheme:dark){:root{--bg:#121A19;--card:#1A2523;--ink:#E6EEEC;--sub:#8EA09C;--line:#2A3835;--acc:#4FD1C0;--accsoft:#1F3A36;--onacc:#0B1514}}
+:root{--bg:#F4F7F6;--card:#fff;--ink:#1C2826;--sub:#6B7B78;--line:#DDE5E3;--acc:#0F766E;--onacc:#fff;color-scheme:light dark}
+@media (prefers-color-scheme:dark){:root{--bg:#121A19;--card:#1A2523;--ink:#E6EEEC;--sub:#8EA09C;--line:#2A3835;--acc:#4FD1C0;--onacc:#0B1514}}
 *{box-sizing:border-box}
 html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font-family:-apple-system,"Hiragino Sans","Yu Gothic",sans-serif;line-height:1.6;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
 main{max-width:520px;margin:0 auto;padding:20px 16px 48px}
-button,input{font:inherit;color:inherit}
+button,input,select{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 .top{display:flex;align-items:center;justify-content:space-between;gap:8px}
@@ -24,28 +24,45 @@ button{cursor:pointer}
 .chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 14px}
 .chip{flex:none;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 14px;font-size:.9rem}
 .chip.on{background:var(--acc);border-color:var(--acc);color:var(--onacc);font-weight:600}
+.dot,.mname::before{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--c);margin-right:7px}
+input:not([type=checkbox]),select{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 12px;min-width:0}
 .add{display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:16px}
-.add input,li.edit input{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 12px;min-width:0}
-.add .cat{grid-column:1}
-.add button{grid-row:1/3;grid-column:2;border:0;border-radius:10px;background:var(--acc);color:var(--onacc);font-weight:700;padding:0 18px}
+.add>button{grid-row:1/3;grid-column:2;border:0;border-radius:10px;background:var(--acc);color:var(--onacc);font-weight:700;padding:0 18px}
+.picker{display:flex;gap:8px}
+.picker select,.picker input{flex:1}
 ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
 li{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+li.hasc{border-left:5px solid var(--c)}
+ul li{transition:transform .15s}
 li input[type=checkbox]{width:24px;height:24px;accent-color:var(--acc);flex:none}
 li .body{flex:1;min-width:0;overflow-wrap:anywhere;cursor:text}
 li.done .body{color:var(--sub);text-decoration:line-through}
-li.drag{opacity:.65;border-color:var(--acc)}
-.grip{flex:none;width:28px;height:36px;display:grid;place-items:center;color:var(--sub);touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
-.tag{display:inline-block;margin-left:8px;background:var(--accsoft);color:var(--acc);border-radius:6px;padding:0 8px;font-size:.8rem;text-decoration:none}
-.del{border:0;background:none;color:var(--sub);font-size:1.3rem;width:36px;height:36px}
+li.drag{transition:none;position:relative;z-index:2;border-color:var(--acc);box-shadow:0 6px 18px rgba(0,0,0,.18)}
+.grip{flex:none;width:36px;height:44px;margin:-4px -4px -4px -8px;display:grid;place-items:center;color:var(--sub);font-size:1.3rem;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;cursor:grab}
+.tag{display:inline-block;margin-left:8px;background:color-mix(in srgb,var(--c) 18%,transparent);color:color-mix(in srgb,var(--c) 65%,var(--ink));border-radius:6px;padding:0 8px;font-size:.8rem;text-decoration:none}
+.del,.ico{border:0;background:none;color:var(--sub);font-size:1.3rem;width:36px;height:36px}
 li.edit{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 li.edit .wide{grid-column:1/3}
 li.edit button{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px}
 li.edit .ok{background:var(--acc);border-color:var(--acc);color:var(--onacc);font-weight:700}
 .empty{text-align:center;color:var(--sub);padding:28px 0}
-.backup{margin-top:32px;padding-top:16px;border-top:1px solid var(--line);color:var(--sub);font-size:.85rem}
+details{margin-top:24px;border-top:1px solid var(--line);padding-top:12px}
+summary{cursor:pointer;color:var(--sub);font-size:.9rem}
+.mrow{margin-top:14px}
+.mhead{display:flex;align-items:center}
+.mname{flex:1;font-weight:600}
+.swatches{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.sw{width:30px;height:30px;border-radius:50%;border:2px solid transparent}
+.sw.on{border-color:var(--ink)}
+.madd{display:flex;gap:8px;margin-top:16px}
+.madd input{flex:1}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 14px;color:var(--ink)}
+.backup{margin-top:24px;padding-top:16px;border-top:1px solid var(--line);color:var(--sub);font-size:.85rem}
 .backup p{margin:0 0 10px}
 .backup .row{display:flex;gap:8px}
-.btn{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 14px;color:var(--ink)}
+.hint{color:var(--sub);font-size:.85rem;margin:10px 0 0}
+.note{margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;color:var(--ink)}
+.note[hidden]{display:none}
 </style>
 </head>
 <body>
@@ -59,72 +76,114 @@ li.edit .ok{background:var(--acc);border-color:var(--acc);color:var(--onacc);fon
   <div class="chips" id="chips"></div>
   <div class="add">
     <input id="text" placeholder="やることを書く" autocomplete="off">
-    <input id="cat" class="cat" placeholder="カテゴリ（空欄でもOK）" list="cats" autocomplete="off">
-    <datalist id="cats"></datalist>
+    <div id="pickSlot"></div>
     <button id="addBtn">追加</button>
   </div>
   <ul id="list"></ul>
   <p class="empty" id="empty" hidden>この日のタスクはまだありません。上の入力欄から追加できます。</p>
+  <details>
+    <summary>カテゴリの管理（色・名前・削除）</summary>
+    <div id="mgr"></div>
+  </details>
   <div class="backup">
     <p>入力した内容は、この端末のブラウザに自動で保存されます。端末の変更やデータ消去に備えて、ファイルにも保存できます。</p>
     <div class="row">
       <button class="btn" id="export">ファイルに保存</button>
       <label class="btn">ファイルから読み込む<input type="file" id="import" accept="application/json,.json" hidden></label>
     </div>
+    <div class="note" id="note" hidden></div>
   </div>
 </main>
 <script>
-const KEY = 'tasks.v1';
+const KEY = 'tasks.v1', CKEY = 'cats.v1';
+const PALETTE = ['#E5484D', '#F76B15', '#D9A000', '#30A46C', '#12A594', '#3E63DD', '#8E4EC6', '#D6409F', '#8B8D98'];
 const $ = id => document.getElementById(id);
-let tasks = load();
+function read(k) { try { return JSON.parse(localStorage.getItem(k)) || []; } catch (e) { return []; } }
+let tasks = read(KEY);
+let cats = read(CKEY);
 let day = iso(new Date());
-let filter = 'all';
-let editing = null;
+let filter = 'all', editing = null, addCat = '', addPicker = null;
 
-function load() { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { return []; } }
-function save() { try { localStorage.setItem(KEY, JSON.stringify(tasks)); } catch (e) {} }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(tasks)); localStorage.setItem(CKEY, JSON.stringify(cats)); } catch (e) {} }
 function iso(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
-function parts() { return day.split('-').map(Number); }
-function shift(n) { const [y, m, d] = parts(); day = iso(new Date(y, m - 1, d + n)); editing = null; render(); }
+function addDays(s, n) { const [y, m, d] = s.split('-').map(Number); return iso(new Date(y, m - 1, d + n)); }
+function shift(n) { day = addDays(day, n); editing = null; render(); }
 function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text) e.textContent = text; return e; }
+function say(msg, yes) {
+  const n = $('note');
+  n.replaceChildren(el('span', '', msg));
+  n.hidden = false;
+  if (!yes) return;
+  const y = el('button', 'btn', 'はい'); y.onclick = () => { n.hidden = true; yes(); };
+  const no = el('button', 'btn', 'やめる'); no.onclick = () => { n.hidden = true; };
+  n.append(y, no);
+}
+const catOf = n => cats.find(c => c.name === n);
+function ensureCat(name) {
+  if (!name || catOf(name)) return;
+  cats.push({ name, color: PALETTE[cats.length % PALETTE.length] });
+  save();
+}
+
+function picker(selected) {
+  const box = el('div', 'picker');
+  const sel = el('select');
+  [['', 'カテゴリなし'], ...cats.map(c => [c.name, c.name]), ['__new', '＋ 新しく作る']].forEach(([v, l]) => {
+    const o = el('option', '', l); o.value = v; sel.append(o);
+  });
+  sel.value = catOf(selected) ? selected : '';
+  const inp = el('input'); inp.placeholder = '新しいカテゴリ名'; inp.hidden = true;
+  sel.onchange = () => { inp.hidden = sel.value !== '__new'; if (!inp.hidden) inp.focus(); };
+  box.append(sel, inp);
+  box.get = () => {
+    if (sel.value !== '__new') return sel.value;
+    const n = inp.value.trim(); ensureCat(n); return n;
+  };
+  return box;
+}
 
 function render() {
-  const [y, m, d] = parts();
+  const [y, m, d] = day.split('-').map(Number);
   $('title').textContent = new Date(y, m - 1, d).toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', weekday: 'short' });
   $('today').hidden = day === iso(new Date());
+  if (filter !== 'all' && !catOf(filter)) filter = 'all';
 
-  const cats = [...new Set(tasks.map(t => t.cat).filter(Boolean))].sort();
-  if (filter !== 'all' && !cats.includes(filter)) filter = 'all';
-
-  $('chips').replaceChildren(...['all', ...cats].map(c => {
-    const b = el('button', 'chip' + (c === filter ? ' on' : ''), c === 'all' ? 'すべて' : c);
-    b.onclick = () => { filter = c; editing = null; render(); };
+  $('chips').replaceChildren(...['all', ...cats.map(c => c.name)].map(n => {
+    const b = el('button', 'chip' + (n === filter ? ' on' : ''), n === 'all' ? 'すべて' : n);
+    if (n !== 'all') { const dot = el('span', 'dot'); dot.style.setProperty('--c', catOf(n).color); b.prepend(dot); }
+    b.onclick = () => { filter = n; editing = null; render(); };
     return b;
   }));
-  $('cats').replaceChildren(...cats.map(c => { const o = el('option'); o.value = c; return o; }));
+
+  addPicker = picker(filter !== 'all' ? filter : addCat);
+  addPicker.querySelector('input').onkeydown = e => { if (e.key === 'Enter' && !e.isComposing) add(); };
+  $('pickSlot').replaceChildren(addPicker);
 
   const list = tasks.filter(t => t.date === day && (filter === 'all' || t.cat === filter));
   const done = list.filter(t => t.done).length;
   $('progress').textContent = list.length ? done + ' / ' + list.length + ' 完了' : '';
   $('empty').hidden = list.length > 0;
-
   $('list').replaceChildren(...list.map(t => String(t.id) === editing ? editRow(t) : row(t)));
   const first = document.querySelector('li.edit input');
   if (first) first.focus();
+  renderMgr();
 }
 
 function row(t) {
   const li = el('li', t.done ? 'done' : '');
   li.dataset.id = String(t.id);
+  const c = catOf(t.cat);
+  if (c) { li.classList.add('hasc'); li.style.setProperty('--c', c.color); }
   const grip = el('span', 'grip', '≡');
   grip.setAttribute('aria-label', 'ドラッグして並び替え');
   grip.onpointerdown = e => startDrag(e, li, grip);
+  grip.oncontextmenu = e => e.preventDefault();
   const cb = el('input');
   cb.type = 'checkbox'; cb.checked = t.done;
   cb.setAttribute('aria-label', '完了にする');
   cb.onchange = () => { t.done = cb.checked; save(); render(); };
   const body = el('span', 'body', t.text);
-  if (t.cat) body.append(el('span', 'tag', t.cat));
+  if (c) body.append(el('span', 'tag', c.name));
   body.onclick = () => { editing = String(t.id); render(); };
   const del = el('button', 'del', '×');
   del.setAttribute('aria-label', '削除');
@@ -136,45 +195,125 @@ function row(t) {
 function editRow(t) {
   const li = el('li', 'edit');
   const text = el('input', 'wide'); text.value = t.text; text.placeholder = 'やること';
-  const cat = el('input', 'wide'); cat.value = t.cat || ''; cat.placeholder = 'カテゴリ'; cat.setAttribute('list', 'cats');
+  const pick = picker(t.cat); pick.classList.add('wide');
+  const dateIn = el('input'); dateIn.type = 'date'; dateIn.value = t.date;
+  const next = el('button', '', '明日へ回す');
   const ok = el('button', 'ok', '保存');
   const cancel = el('button', '', 'キャンセル');
   const commit = () => {
     const v = text.value.trim();
     if (!v) return;
-    t.text = v; t.cat = cat.value.trim();
+    t.text = v; t.cat = pick.get(); t.date = dateIn.value || t.date;
     editing = null; save(); render();
   };
-  const keys = e => {
+  text.onkeydown = e => {
     if (e.isComposing) return;
     if (e.key === 'Enter') commit();
     if (e.key === 'Escape') { editing = null; render(); }
   };
-  text.onkeydown = keys; cat.onkeydown = keys;
+  next.onclick = () => { dateIn.value = addDays(dateIn.value || t.date, 1); commit(); };
   ok.onclick = commit;
   cancel.onclick = () => { editing = null; render(); };
-  li.append(text, cat, ok, cancel);
+  li.append(text, pick, dateIn, next, ok, cancel);
   return li;
+}
+
+let renaming = null, armed = null;
+function renderMgr() {
+  const rows = cats.map(c => {
+    const r = el('div', 'mrow');
+    const head = el('div', 'mhead');
+    if (renaming === c.name) {
+      const inp = el('input'); inp.value = c.name;
+      const msg = el('p', 'hint');
+      const go = () => {
+        const n = inp.value.trim();
+        if (!n) return;
+        if (n !== c.name && catOf(n)) { msg.textContent = '同じ名前のカテゴリがあります'; return; }
+        tasks.forEach(t => { if (t.cat === c.name) t.cat = n; });
+        if (filter === c.name) filter = n;
+        c.name = n; renaming = null; save(); render();
+      };
+      const cancel = () => { renaming = null; renderMgr(); };
+      const ok = el('button', 'btn', '保存'); ok.onclick = go;
+      const no = el('button', 'btn', 'やめる'); no.onclick = cancel;
+      inp.onkeydown = e => { if (e.isComposing) return; if (e.key === 'Enter') go(); if (e.key === 'Escape') cancel(); };
+      head.style.gap = '8px'; inp.style.flex = '1';
+      head.append(inp, ok, no);
+      r.append(head, msg);
+      setTimeout(() => inp.focus());
+      return r;
+    }
+    const name = el('span', 'mname', c.name); name.style.setProperty('--c', c.color);
+    head.append(name);
+    if (armed === c.name) {
+      const q = el('span', 'hint', '削除しますか？');
+      const yes = el('button', 'btn', '削除');
+      yes.onclick = () => {
+        tasks.forEach(t => { if (t.cat === c.name) t.cat = ''; });
+        cats = cats.filter(x => x !== c); armed = null; save(); render();
+      };
+      const no = el('button', 'btn', 'やめる'); no.onclick = () => { armed = null; renderMgr(); };
+      head.style.gap = '8px'; q.style.margin = '0';
+      head.append(q, yes, no);
+    } else {
+      const ren = el('button', 'ico', '✎'); ren.setAttribute('aria-label', '名前を変更');
+      ren.onclick = () => { renaming = c.name; armed = null; renderMgr(); };
+      const del = el('button', 'ico', '×'); del.setAttribute('aria-label', 'カテゴリを削除');
+      del.onclick = () => { armed = c.name; renaming = null; renderMgr(); };
+      head.append(ren, del);
+    }
+    const sw = el('div', 'swatches');
+    PALETTE.forEach(col => {
+      const b = el('button', 'sw' + (col === c.color ? ' on' : ''));
+      b.style.background = col; b.setAttribute('aria-label', '色を選ぶ');
+      b.onclick = () => { c.color = col; save(); render(); };
+      sw.append(b);
+    });
+    r.append(head, sw);
+    return r;
+  });
+  if (armed || renaming) { /* keep state until finished */ }
+  const madd = el('div', 'madd');
+  const inp = el('input'); inp.placeholder = '新しいカテゴリ名';
+  const btn = el('button', 'btn', '追加');
+  const go = () => { const n = inp.value.trim(); if (n) { ensureCat(n); render(); } };
+  btn.onclick = go;
+  inp.onkeydown = e => { if (e.key === 'Enter' && !e.isComposing) go(); };
+  madd.append(inp, btn);
+  $('mgr').replaceChildren(...rows, madd);
 }
 
 function startDrag(e, li, grip) {
   e.preventDefault();
-  const ul = $('list');
+  const items = [...$('list').children];
+  const from = items.indexOf(li);
+  const rects = items.map(x => x.getBoundingClientRect());
+  const size = rects[from].height + 8;
+  const startY = e.clientY;
+  let to = from;
   li.classList.add('drag');
   grip.setPointerCapture(e.pointerId);
   const move = ev => {
-    const over = document.elementFromPoint(ev.clientX, ev.clientY);
-    const target = over && over.closest('li');
-    if (target && target !== li && target.parentNode === ul) {
-      const r = target.getBoundingClientRect();
-      ul.insertBefore(li, ev.clientY < r.top + r.height / 2 ? target : target.nextSibling);
-    }
+    const dy = ev.clientY - startY;
+    li.style.transform = 'translateY(' + dy + 'px)';
+    const center = rects[from].top + rects[from].height / 2 + dy;
+    to = rects.filter((r, j) => j !== from && r.top + r.height / 2 < center).length;
+    items.forEach((x, j) => {
+      if (j === from) return;
+      let s = 0;
+      if (to > from && j > from && j <= to) s = -size;
+      if (to < from && j >= to && j < from) s = size;
+      x.style.transform = s ? 'translateY(' + s + 'px)' : '';
+    });
   };
   const end = () => {
     grip.removeEventListener('pointermove', move);
     grip.removeEventListener('pointerup', end);
     grip.removeEventListener('pointercancel', end);
-    commitOrder([...ul.children].map(x => x.dataset.id));
+    const ids = items.filter(x => x !== li).map(x => x.dataset.id);
+    ids.splice(to, 0, li.dataset.id);
+    commitOrder(ids);
   };
   grip.addEventListener('pointermove', move);
   grip.addEventListener('pointerup', end);
@@ -191,15 +330,16 @@ function commitOrder(ids) {
 function add() {
   const text = $('text').value.trim();
   if (!text) return;
-  const typed = $('cat').value.trim();
-  tasks.push({ id: String(Date.now() + Math.random()), date: day, text, cat: typed || (filter !== 'all' ? filter : ''), done: false });
+  const cat = addPicker.get();
+  addCat = cat;
+  tasks.push({ id: String(Date.now() + Math.random()), date: day, text, cat, done: false });
   $('text').value = '';
   save(); render();
   $('text').focus();
 }
 
 $('export').onclick = () => {
-  const blob = new Blob([JSON.stringify(tasks, null, 1)], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify({ version: 2, tasks, cats }, null, 1)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = 'tasks-' + iso(new Date()) + '.json';
@@ -209,26 +349,30 @@ $('export').onclick = () => {
 
 $('import').onchange = async e => {
   const f = e.target.files[0];
+  e.target.value = '';
   if (!f) return;
   try {
     const data = JSON.parse(await f.text());
-    if (!Array.isArray(data) || !data.every(t => t && typeof t.text === 'string' && typeof t.date === 'string')) throw new Error('bad');
-    if (confirm('今のタスクを、このファイルの内容で置き換えます。よろしいですか？')) {
-      tasks = data.map(t => ({ id: String(t.id ?? Date.now() + Math.random()), date: t.date, text: t.text, cat: t.cat || '', done: !!t.done }));
-      save(); render();
-    }
+    const list = Array.isArray(data) ? data : data.tasks;
+    const cl = Array.isArray(data) ? [] : (data.cats || []);
+    if (!Array.isArray(list) || !list.every(t => t && typeof t.text === 'string' && typeof t.date === 'string')) throw new Error('bad');
+    say('今のタスクとカテゴリを、このファイルの内容で置き換えます。よろしいですか？', () => {
+      tasks = list.map(t => ({ id: String(t.id ?? Date.now() + Math.random()), date: t.date, text: t.text, cat: t.cat || '', done: !!t.done }));
+      cats = cl.filter(c => c && typeof c.name === 'string').map((c, i) => ({ name: c.name, color: PALETTE.includes(c.color) ? c.color : PALETTE[i % PALETTE.length] }));
+      tasks.forEach(t => ensureCat(t.cat));
+      save(); render(); say('読み込みました。');
+    });
   } catch (err) {
-    alert('読み込めませんでした。「ファイルに保存」で書き出したファイルを選んでください。');
+    say('読み込めませんでした。「ファイルに保存」で書き出したファイルを選んでください。');
   }
-  e.target.value = '';
 };
 
 $('addBtn').onclick = add;
 $('text').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) add(); });
-$('cat').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) add(); });
 $('prev').onclick = () => shift(-1);
 $('next').onclick = () => shift(1);
 $('today').onclick = () => { day = iso(new Date()); editing = null; render(); };
+tasks.forEach(t => { if (t.cat) ensureCat(t.cat); });
 render();
 </script>
 </body>
